@@ -1,0 +1,13 @@
+{
+    "github.codespaces.defaultExtensions": [
+        
+        "GitHub.codespaces",
+        "GitHub.vscode-pull-request-github"
+    ],
+    "cSpell.words": [
+        "devcontainers",
+        "dotnetaspire",
+        "itsmechlark",
+        "nikiforovall"
+    ]
+}

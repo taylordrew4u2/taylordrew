@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Countdown Timer</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #111;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    #timer {
+      font-size: 40vw;
+      color: #fff;
+      font-family: 'Arial Black', Arial, sans-serif;
+      text-align: center;
+      width: 100vw;
+      height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      transition: color 0.3s;
+    }
+    #message {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 4vw;
+      color: #fff200;
+      background: rgba(0,0,0,0.8);
+      padding: 2vw 4vw;
+      border-radius: 2vw;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+      z-index: 10;
+    }
+    .show-message {
+      opacity: 1;
+      animation: flash-message 0.5s alternate 5;
+    }
+    @keyframes flash-message {
+      from { color: #fff200; }
+      to { color: #ff0000; }
+    }
+    .flash-red {
+      animation: flash-red-bg 1s steps(2, end) 10;
+    }
+    @keyframes flash-red-bg {
+      0% { background: #111; }
+      50% { background: #ff0000; }
+      100% { background: #111; }
+    }
+    .timer-warning {
+      color: #ff0000 !important;
+      animation: color-flash 1s alternate infinite;
+    }
+    @keyframes color-flash {
+      from { color: #ff0000; }
+      to { color: #fff200; }
+    }
+    .button-row {
+      position: absolute;
+      bottom: 3vw;
+      left: 0;
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      z-index: 20;
+      justify-content: center;
+    }
+    .button-group {
+      display: flex;
+      gap: 1vw;
+      margin-left: 3vw;
+    }
+    .button-row button, .button-row .button-group button {
+      font-size: 1vw;
+      padding: 1vw 2vw;
+      border: none;
+      border-radius: 1vw;
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: background 0.2s;
+      min-width: 2vw;
+    }
+    .button-row button:active, .button-row .button-group button:active {
+      background: #444;
+    }
+    .timer-label {
+      flex: 1;
+      text-align: center;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 1vw;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+    @media (max-width: 600px) {
+      #timer { font-size: 60vw; height: 70vh; }
+      #message { font-size: 7vw; padding: 4vw 6vw; }
+      .button-row button, .button-row .button-group button { font-size: 2.5vw; padding: 2vw 4vw; min-width: 4vw; }
+      .timer-label { font-size: 2.5vw; }
+      .button-row { left: 2vw; gap: 2vw; width: auto; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="timer">5:00</div>
+  <div id="message">stop for feedback or continue for next minute</div>
+  <div class="button-row">
+    <div class="button-group">
+      <button id="startBtn">Start</button>
+      <button id="exitBtn">Exit</button>
+      <button id="speedUpBtn" title="Speed Up" aria-label="Speed Up">&#9650;</button>
+      <button id="slowDownBtn" title="Slow Down" aria-label="Slow Down">&#9660;</button>
+    </div>
+    <div class="timer-label">the taylor drew review timer</div>
+  </div>
+  <script>
+    let timer = 300;
+    let interval = null;
+    let flashing = false;
+    let messageTimeout = null;
+    const timerEl = document.getElementById('timer');
+    const messageEl = document.getElementById('message');
+    const startBtn = document.getElementById('startBtn');
+    const exitBtn = document.getElementById('exitBtn');
+    const speedUpBtn = document.getElementById('speedUpBtn');
+    const slowDownBtn = document.getElementById('slowDownBtn');
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+      timerEl.textContent = formatTime(timer);
+      if (timer <= 60 && timer > 0) {
+        timerEl.classList.add('timer-warning');
+      } else {
+        timerEl.classList.remove('timer-warning');
+      }
+    }
+
+    function showMessage() {
+      messageEl.classList.add('show-message');
+      setTimeout(() => {
+        messageEl.classList.remove('show-message');
+      }, 5000);
+    }
+
+    function startFlashingRed() {
+      document.body.classList.add('flash-red');
+      flashing = true;
+      setTimeout(() => {
+        document.body.classList.remove('flash-red');
+        flashing = false;
+        timer = 300;
+        updateTimer();
+        startBtn.disabled = false;
+      }, 10000);
+    }
+
+    function restartInterval() {
+      if (interval) {
+        clearInterval(interval);
+        interval = setInterval(tick, 1000);
+      }
+    }
+
+    speedUpBtn.onclick = function() {
+      if (timer < 300) {
+        timer = Math.min(timer + 10, 300);
+        updateTimer();
+      }
+    };
+    slowDownBtn.onclick = function() {
+      if (timer > 0) {
+        timer = Math.max(timer - 10, 0);
+        updateTimer();
+      }
+    };
+
+    function tick() {
+      if (timer > 0) {
+        timer--;
+        updateTimer();
+        if (timer === 60) {
+          showMessage();
+        }
+      } else {
+        clearInterval(interval);
+        interval = null;
+        startFlashingRed();
+      }
+    }
+
+    startBtn.onclick = function() {
+      if (interval || flashing) return;
+      startBtn.disabled = true;
+      interval = setInterval(tick, 1000);
+    };
+
+    exitBtn.onclick = function() {
+      window.close();
+      // For browsers that block window.close, show a message
+      alert('You may close the tab or app now.');
+    };
+
+    updateTimer();
+  </script>
+</body>
+</html>
